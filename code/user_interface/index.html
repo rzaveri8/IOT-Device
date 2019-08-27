@@ -1,0 +1,230 @@
+<!-- client side -->
+
+<!doctype html>
+<html>
+
+<!-- HTML HEAD -->
+<head>
+	<title>Quest 3 Client</title>
+
+	<!-- Source for Socket.io - this one is local -->
+	<script src="/socket.io/socket.io.js"></script>
+
+	<style>
+  	canvas{
+  		-moz-user-select: none;
+  		-webkit-user-select: none;
+  		-ms-user-select: none;
+  	}
+		*{
+			box-sizing: border-box;
+		}
+		.header {
+			background-color: #2ECC71;
+			color: white;
+			padding: 15px;
+		}
+		.footer {
+			background-color: #2ECC71;
+			color: white;
+			padding: 10px;
+			position: absolute;
+			bottom: 0;
+			width: 100%;
+		}
+		.left_container {
+			float: left;
+		}
+		.right_container {
+			float: right;
+		}
+		.button {
+			background-color: black;
+			border: none;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 4px 2px;
+			cursor: pointer;
+		}
+		.button2 {
+			background-color: white;
+			border: 2px solid black;
+			color: black;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 6px 3px;
+			cursor: pointer;
+		}
+		.button3 {
+			background-color: black;
+			border: none;
+			color: white;
+			padding: 10px 24px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			margin: 6px 3px;
+			cursor: pointer;
+		}
+		.clearfix::after {
+			content: "";
+			clear: both;
+			display: table;
+		}
+		.servo_container {
+			width: 50%;
+			float: left;
+		}
+		.servo_mode {
+			color: black;
+		}
+		.sensor_container {
+			float: left;
+		}
+		.slidecontainer{
+			width: 50%;
+			float: left;
+		}
+		.slider{
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 75%; /* Full-width */
+    height: 25px; /* Specified height */
+    background: #d3d3d3; /* Grey background */
+    outline: none; /* Remove outline */
+    opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+    -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+    transition: opacity .2s;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 25px; /* Set a specific slider handle width */
+    height: 25px; /* Slider handle height */
+    background: #4CAF50; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+    width: 25px; /* Set a specific slider handle width */
+    height: 25px; /* Slider handle height */
+    background: #4CAF50; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+}
+
+	</style>
+</head>
+
+
+
+
+<body>
+	<!-- HTML layout -->
+	<div class="header">
+<center>  <h1> Ruby, Cameron, Genny: Quest 3 Client</h1> <br> </center>
+</div>
+
+<center>
+	<div class="slidecontainer">
+		<h1>Set Time for Appliance to Begin</h1>
+
+		<p>Hour: <span id="hour_display"></span></p>
+	  <input type="range" min="0" max="23" value="12" class="slider" id="hour_set">
+
+		<p>Minutes: <span id="min_display"></span></p>
+		<input type="range" min="0" max="59" value="30" class="slider" id="min_set">
+
+		<center>
+			<button class="button3" onclick="send_time()" id="setTime">Set Time</button>
+			<button class="button3" onclick="reset_time()" id="resetTime">  Reset  </button>
+		</center>
+		<br>
+		<center>
+			<h1>Current Distance</h1>
+			<div id="distance_display"><center>Distance:</center></div>
+		</center>
+	</div>
+</center>
+
+<div class="servo_container">
+	<center> <h1>LED Control</h1> </center>
+	<center>	<button class="button" onclick="servo_on()">Turn on</button>
+	<button class="button2" onclick="servo_off()">Turn off</button></center>
+	<div id="servo_mode"><center>LED off</center></div>
+</div>
+
+<br><br>
+<br>
+<center>
+	<h1>Live Feed</h1>
+<iframe src="http://group16.ddns.net:2100" height="320px" width="640px" scrolling="no"></iframe>
+</center>
+<div class="footer">
+	<center> Quest 3 Client Page </center>
+</div>
+
+
+
+<script>
+var servo_mode;
+var hour_set;
+var min_set;
+var hr_slider = document.getElementById("hour_set");
+var hr_output = document.getElementById("hour_display");
+var min_slider = document.getElementById("min_set");
+var min_output = document.getElementById("min_display");
+
+var socket = io();
+
+function servo_on() {
+	document.getElementById("servo_mode").innerHTML = "<center>LED on</center>";
+	servo_mode = 1;
+	socket.emit('servo_mode', servo_mode);
+}
+
+function servo_off() {
+	document.getElementById("servo_mode").innerHTML = "<center>LED off</center>";
+	servo_mode = 0;
+	socket.emit('servo_mode', servo_mode);
+}
+
+socket.on('dist_update', function(dist){
+	document.getElementById("distance_display").innerHTML = "<center>Distance: "+dist+"</center>";
+});
+
+min_output.innerHTML = min_slider.value;
+min_slider.oninput = function() {
+  min_output.innerHTML = this.value;
+}
+
+hr_output.innerHTML = hr_slider.value;
+hr_slider.oninput = function() {
+  hr_output.innerHTML = this.value;
+}
+
+function send_time() {
+	hour_set = hr_slider.value;
+	min_set = min_slider.value;
+	socket.emit('set_time', hour_set, min_set);
+}
+
+function reset_time() {
+	hr_slider.value = 12;
+	min_slider.value = 30;
+	hr_output.innerHTML = 12;
+	min_output.innerHTML = 30;
+}
+
+</script>
+
+</body>
+
+</html>
